@@ -1,5 +1,7 @@
 #include <iostream>
 #include <memory>
+#include <gtest/gtest.h>
+
 
 template <typename T>
 class Matrix
@@ -160,14 +162,14 @@ Matrix<T>::~Matrix()
     delete[] data;
 }
 
-int main(int argc, char const *argv[])
-{
+TEST(test1, matrix_move){
+
     Matrix<int> matrix1(3, 2, 3);
-    Matrix matrix2(3, 2, 1);
+    Matrix<int> matrix2(3, 2, 1);
+    Matrix<int> matrix3(3, 2, 3);
 
     matrix2 = std::move(matrix1);
 
-    matrix2.dump(std::cout);
+    EXPECT_EQ(matrix2[0][0], matrix3[0][0]);
 
-    return 0;
 }
