@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.11)
-project(Example)
+project(Matrix)
 
 find_package(GTest REQUIRED)
 
@@ -12,8 +12,8 @@ set(SRC main.cpp)
 
 enable_testing()
 
-set(UNIT_TARGET ${TGT}_unit)
-set(TEST_TARGET ${TGT}_test)
+set(UNIT_TARGET ${PROJECT_NAME}_unit)
+set(TEST_TARGET ${PROJECT_NAME}_test)
 
 add_executable(${UNIT_TARGET} ${SRC})
 target_include_directories(${UNIT_TARGET} PRIVATE ${GTEST_INCLUDE_DIRS})
