@@ -35,15 +35,6 @@ public:
     T trace() const;
 
     void swap(Matrix &rhs) noexcept;
-    void show() const
-    {
-        for (size_t i = 0; i < rows; ++i)
-        {
-            for (size_t k = 0; k < cols; ++k)
-                std::cout << data[i][k] << ' ';
-            std::cout << std::endl;
-        }
-    }
 
     bool equal(const Matrix &other) const;
     bool less(const Matrix &other) const;
@@ -115,6 +106,17 @@ T **safe_copy(const T **src, int rows, int cols)
 }
 
 template <typename T>
+void Matrix<T>::dump(std::ostream &os) const
+{
+    for (size_t i = 0; i < rows; ++i)
+    {
+        for (size_t k = 0; k < cols; ++k)
+            os << data[i][k] << ' ';
+        os << std::endl;
+    }
+}
+
+template <typename T>
 Matrix<T>::Matrix(const Matrix<T> &rhs) : data(safe_copy<T>((const T **)rhs.data, rows, cols)),
                                           rows(rhs.rows),
                                           cols(rhs.cols) {}
@@ -165,7 +167,7 @@ int main(int argc, char const *argv[])
 
     matrix2 = std::move(matrix1);
 
-    matrix2.show();
+    matrix2.dump(std::cout);
 
     return 0;
 }
