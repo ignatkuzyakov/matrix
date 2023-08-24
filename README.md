@@ -4,7 +4,7 @@
 for google tests
 
 ```
-sudo apt-get install libgtest-dev googletest googletest-tools google-mock libboost-dev
+sudo apt-get install libgtest-dev googletest googletest-tools google-mock
 ```
 
 build
