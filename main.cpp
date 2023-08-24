@@ -76,7 +76,7 @@ Matrix<T> Matrix<T>::eye(int n, int m)
     Matrix<T> result(n, m, 0);
     if (n == m)
 
-        for (int i = 0; i < ncols; ++i)
+        for (int i = 0; i < m; ++i)
             result[i][i] = 1;
 
     else
@@ -263,11 +263,11 @@ TEST(test1, matrix_move)
 {
     Matrix<int> matrix1(3, 2, 3);
     Matrix<int> matrix2(3, 2, 1);
-    Matrix<int> matrix3(3, 2, 3);
+    
 
     matrix2 = std::move(matrix1);
 
-    EXPECT_EQ(matrix2, matrix3);
+    EXPECT_EQ(matrix2, Matrix<int> (3, 2, 3));
 }
 
 TEST(test2, negate)
@@ -276,6 +276,17 @@ TEST(test2, negate)
     Matrix<int> matrix2(3, 2, -3);
 
     matrix1.negate();
+
+    EXPECT_EQ(matrix1, matrix2);
+}
+
+TEST(test3, eye)
+{
+    Matrix<int> matrix1(3, 3, 0);
+    for (int i = 0; i < 3; ++i)
+        matrix1[i][i] = 1;
+
+    Matrix<int> matrix2 = Matrix<int>::eye(3, 3);
 
     EXPECT_EQ(matrix1, matrix2);
 }
