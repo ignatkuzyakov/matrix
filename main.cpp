@@ -2,7 +2,6 @@
 #include <memory>
 #include <gtest/gtest.h>
 
-
 template <typename T>
 class Matrix
 {
@@ -21,9 +20,6 @@ public:
 public:
     Matrix(int cols, int rows, T val = T{});
 
-    template <typename It>
-    Matrix(int cols, int rows, It start, It fin);
-
     static Matrix eye(int n, int m);
 
 public: // operations
@@ -38,12 +34,12 @@ public:
 
     void swap(Matrix &rhs) noexcept;
 
-    bool operator==(const Matrix<T> &rhs) const ;
+    bool operator==(const Matrix<T> &rhs) const;
 
-        // Compares matrix1 and matrix2 ((rows1 == rows2) && (cols1 == cols2)),
-        // element by element,
-        // returning rows x cols matrix containing 1 where predicate is true, and 0 otherwise.
-        Matrix equal(const Matrix &other) const;
+    // Compares matrix1 and matrix2 ((rows1 == rows2) && (cols1 == cols2)),
+    // element by element,
+    // returning rows x cols matrix containing 1 where predicate is true, and 0 otherwise.
+    Matrix equal(const Matrix &other) const;
 
     // Compares matrix1 and matrix2 ((rows1 == rows2) && (cols1 == cols2)),
     // element by element,
@@ -64,7 +60,6 @@ private:
     };
 
 public:
-
     ProxyRow operator[](int m) { return ProxyRow(data[m]); }
     const ProxyRow operator[](int m) const { return ProxyRow(data[m]); }
 };
@@ -97,7 +92,7 @@ bool Matrix<T>::operator==(const Matrix<T> &rhs) const
         for (int k = 0; k < cols; ++k)
             if (data[i][k] != rhs[i][k])
                 return false;
-                
+
     return true;
 }
 
@@ -174,8 +169,6 @@ Matrix<T>::Matrix(int cols, int rows, T val) : data(new T *[rows]), cols(cols), 
         for (int k = 0; k < cols; ++k)
             data[i][k] = val;
     }
-
-    
 }
 
 template <typename T>
@@ -266,7 +259,6 @@ Matrix<T>::~Matrix()
     delete[] data;
 }
 
-
 TEST(test1, matrix_move)
 {
     Matrix<int> matrix1(3, 2, 3);
@@ -285,8 +277,5 @@ TEST(test2, negate)
 
     matrix1.negate();
 
-    EXPECT_EQ(matrix1, matrix2);  
+    EXPECT_EQ(matrix1, matrix2);
 }
-
-
-
