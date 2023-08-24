@@ -267,7 +267,7 @@ TEST(test1, matrix_move)
 
     matrix2 = std::move(matrix1);
 
-    EXPECT_EQ(matrix2[0][0], matrix3[0][0]);
+    EXPECT_EQ(matrix2, matrix3);
 }
 
 TEST(test2, negate)
