@@ -1,5 +1,6 @@
 #include <iostream>
 #include <memory>
+#include <cmath>
 #include <gtest/gtest.h>
 
 template <typename T>
@@ -31,6 +32,11 @@ public:
     int nrows() const;
 
     T trace() const;
+
+    // The det method using the sum of the products
+    // of the elements of any one row or column and their cofactors.
+    T det() const;
+    T det(Matrix<T> matrix) const;
 
     void swap(Matrix &rhs) noexcept;
 
@@ -86,6 +92,45 @@ Matrix<T> Matrix<T>::eye(int n, int m)
 }
 
 template <typename T>
+T Matrix<T>::det() const { return det(*this); }
+
+template <typename T>
+T Matrix<T>::det(Matrix<T> matrix) const
+{
+    int sz_ = matrix.ncols();
+
+    if (sz_ == 1)
+        return matrix[0][0];
+
+    else if (sz_ == 2)
+        return matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
+
+    else
+    {
+        T resultD = 0;
+        for (int k = 0; k < sz_; k++)
+        {
+            Matrix<T> subMatrix(sz_ - 1, sz_ - 1);
+
+            for (int i = 1; i < sz_; i++)
+            {
+                for (int j = 0; j < sz_; j++)
+                {
+                    if (j == k)
+                        continue;
+                    else if (j < k)
+                        subMatrix[i - 1][j] = matrix[i][j];
+                    else
+                        subMatrix[i - 1][j - 1] = matrix[i][j];
+                }
+            }
+            resultD += std::pow(-1, k + 2) * matrix[0][k] * det(subMatrix);
+        }
+        return resultD;
+    }
+}
+
+template <typename T>
 bool Matrix<T>::operator==(const Matrix<T> &rhs) const
 {
     for (int i = 0; i < rows; ++i)
@@ -99,7 +144,7 @@ bool Matrix<T>::operator==(const Matrix<T> &rhs) const
 template <typename T>
 Matrix<T> Matrix<T>::less(const Matrix &other) const
 {
-    Matrix<T> result(ncols, nrows, 0);
+    Matrix<T> result(cols, rows, 0);
 
     for (int i = 0; i < rows; ++i)
         for (int k = 0; k < cols; ++k)
@@ -112,7 +157,7 @@ Matrix<T> Matrix<T>::less(const Matrix &other) const
 template <typename T>
 Matrix<T> Matrix<T>::equal(const Matrix &other) const
 {
-    Matrix<T> result(ncols, nrows, 0);
+    Matrix<T> result(cols, rows, 0);
 
     for (int i = 0; i < rows; ++i)
         for (int k = 0; k < cols; ++k)
@@ -135,7 +180,7 @@ Matrix<T> &Matrix<T>::negate() &
 template <typename T>
 Matrix<T> &Matrix<T>::transpose() &
 {
-    Matrix<T> tmp(nrows, ncols);
+    Matrix<T> tmp(rows, cols);
 
     for (int i = 0; i < rows; ++i)
         for (int k = 0; k < cols; ++k)
@@ -151,8 +196,8 @@ T Matrix<T>::trace() const
 {
     T result{};
 
-    if (ncols == nrows)
-        for (int i = 0; i < ncols; ++i)
+    if (cols == rows)
+        for (int i = 0; i < cols; ++i)
             result += data[i][i];
     else
         std::cout << "cols != rows" << std::endl;
@@ -253,40 +298,94 @@ Matrix<T> &Matrix<T>::operator=(Matrix<T> &&rhs)
 template <typename T>
 Matrix<T>::~Matrix()
 {
-    for (int i = 0; i < rows; ++i)
-        delete[] data[i];
+    if (data != nullptr)
+        for (int i = 0; i < rows; ++i)
+            delete[] data[i];
 
     delete[] data;
 }
 
-TEST(test1, matrix_move)
+TEST(test1, moveAssigment)
 {
     Matrix<int> matrix1(3, 2, 3);
     Matrix<int> matrix2(3, 2, 1);
-    
 
     matrix2 = std::move(matrix1);
 
-    EXPECT_EQ(matrix2, Matrix<int> (3, 2, 3));
+    EXPECT_EQ(matrix2, Matrix<int>(3, 2, 3));
 }
 
-TEST(test2, negate)
+TEST(test2, moveConstruct)
 {
     Matrix<int> matrix1(3, 2, 3);
-    Matrix<int> matrix2(3, 2, -3);
+    Matrix<int> matrix2(std::move(matrix1));
+
+    EXPECT_EQ(matrix2, Matrix<int>(3, 2, 3));
+}
+
+TEST(test3, negate)
+{
+    Matrix<int> matrix1(3, 2, 3);
 
     matrix1.negate();
 
-    EXPECT_EQ(matrix1, matrix2);
+    EXPECT_EQ(matrix1, Matrix<int>(3, 2, -3));
 }
 
-TEST(test3, eye)
+TEST(test4, eye)
 {
-    Matrix<int> matrix1(3, 3, 0);
+    Matrix<int> matrix1(3, 3);
     for (int i = 0; i < 3; ++i)
         matrix1[i][i] = 1;
 
     Matrix<int> matrix2 = Matrix<int>::eye(3, 3);
+
+    EXPECT_EQ(matrix1, matrix2);
+}
+
+TEST(test5, trace)
+{
+    Matrix<int> matrix1(3, 3, 7);
+
+    EXPECT_EQ(matrix1.trace(), 7 * 3);
+}
+
+TEST(test6, det)
+{
+    Matrix<int> matrix1(4, 4, 0);
+
+    int g = -1;
+
+    for (int i = 0; i < 4; ++i)
+        for (int k = 0; k < 4; ++k)
+            matrix1[i][k] = g++;
+
+    matrix1[2][0] = 10;
+    matrix1[0][2] = 10;
+
+    EXPECT_EQ(matrix1.det(), 432);
+}
+
+TEST(test7, equal)
+{
+    Matrix<int> matrix1(4, 4, 5);
+
+    EXPECT_EQ(matrix1.equal(matrix1), Matrix<int>(4, 4, 1));
+}
+
+TEST(test8, less)
+{
+    Matrix<int> matrix1(4, 4, 5);
+
+    EXPECT_EQ(matrix1.less(matrix1), Matrix<int>(4, 4));
+}
+
+TEST(test9, transpose)
+{
+    Matrix<int> matrix1(4, 2);
+    Matrix<int> matrix2(2, 4);
+
+    matrix2.transpose();
 
     EXPECT_EQ(matrix1, matrix2);
 }
