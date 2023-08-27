@@ -1,11 +1,17 @@
 cmake_minimum_required(VERSION 3.10)
 project(Matrix)
 
-enable_testing()
 find_package(GTest REQUIRED)
 
-add_executable(main main.cpp)
-target_link_libraries(main GTest::gtest GTest::gtest_main)
+add_library(matrixLib INTERFACE)
+target_include_directories(matrixLib INTERFACE matrix)
 
+enable_testing()
 
-gtest_discover_tests(main)
+add_executable(tests tests.cpp)
+
+target_include_directories(tests PRIVATE ${GTEST_INCLUDE_DIRS})
+target_link_libraries(tests PRIVATE ${GTEST_BOTH_LIBRARIES})
+target_link_libraries(tests PRIVATE matrixLib)
+
+gtest_discover_tests(tests)
