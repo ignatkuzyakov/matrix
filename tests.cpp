@@ -4,29 +4,29 @@
 
 TEST(test1, moveAssigment)
 {
-    Matrix<int> matrix1(3, 2, 3);
-    Matrix<int> matrix2(3, 2, 1);
+    Matrix matrix1(3, 2, 3);
+    Matrix matrix2(3, 2, 1);
 
     matrix2 = std::move(matrix1);
 
-    EXPECT_EQ(matrix2, Matrix<int>(3, 2, 3));
+    EXPECT_EQ(matrix2, Matrix(3, 2, 3));
 }
 
 TEST(test2, moveConstruct)
 {
-    Matrix<int> matrix1(3, 2, 3);
-    Matrix<int> matrix2(std::move(matrix1));
+    Matrix matrix1(3, 2, 3);
+    Matrix matrix2(std::move(matrix1));
 
-    EXPECT_EQ(matrix2, Matrix<int>(3, 2, 3));
+    EXPECT_EQ(matrix2, Matrix(3, 2, 3));
 }
 
 TEST(test3, negate)
 {
-    Matrix<int> matrix1(3, 2, 3);
+    Matrix matrix1(3, 2, 3);
 
     matrix1.negate();
 
-    EXPECT_EQ(matrix1, Matrix<int>(3, 2, -3));
+    EXPECT_EQ(matrix1, Matrix(3, 2, -3));
 }
 
 TEST(test4, eye)
@@ -35,21 +35,21 @@ TEST(test4, eye)
     for (int i = 0; i < 3; ++i)
         matrix1[i][i] = 1;
 
-    Matrix<int> matrix2 = Matrix<int>::eye(3, 3);
+    Matrix matrix2 = Matrix<int>::eye(3, 3);
 
     EXPECT_EQ(matrix1, matrix2);
 }
 
 TEST(test5, trace)
 {
-    Matrix<int> matrix1(3, 3, 7);
+    Matrix matrix1(3, 3, 7);
 
     EXPECT_EQ(matrix1.trace(), 7 * 3);
 }
 
 TEST(test6, det)
 {
-    Matrix<int> matrix1(4, 4, 0);
+    Matrix matrix1(4, 4, 0);
 
     int g = -1;
 
@@ -65,14 +65,14 @@ TEST(test6, det)
 
 TEST(test7, equal)
 {
-    Matrix<int> matrix1(4, 4, 5);
+    Matrix matrix1(4, 4, 5);
 
-    EXPECT_EQ(matrix1.equal(matrix1), Matrix<int>(4, 4, 1));
+    EXPECT_EQ(matrix1.equal(matrix1), Matrix(4, 4, 1));
 }
 
 TEST(test8, less)
 {
-    Matrix<int> matrix1(4, 4, 5);
+    Matrix matrix1(4, 4, 5);
 
     EXPECT_EQ(matrix1.less(matrix1), Matrix<int>(4, 4));
 }
@@ -85,4 +85,24 @@ TEST(test9, transpose)
     matrix2.transpose();
 
     EXPECT_EQ(matrix1, matrix2);
+}
+
+TEST(test10, initList)
+{
+    Matrix matrix1 (2, 2, 3);
+    Matrix matrix2 = {{3, 3},
+                      {3, 3}};
+                      
+    EXPECT_EQ(matrix1, matrix2);
+}
+
+TEST(test11, types)
+{
+    Matrix matrixFloat = {{1.0f}};
+    Matrix matrixBoolTrue = {{true}};
+    Matrix matrixBoolFalse = {{false}};
+
+    EXPECT_TRUE     (matrixBoolTrue[0][0]);
+    EXPECT_FALSE    (matrixBoolFalse[0][0]);
+    EXPECT_FLOAT_EQ (matrixFloat[0][0], 1.0f);
 }

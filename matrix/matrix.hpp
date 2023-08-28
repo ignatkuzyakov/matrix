@@ -4,6 +4,7 @@
 #include <iostream>
 #include <cmath>
 #include <algorithm>
+#include <vector>
 
 template <typename T>
 class Matrix
@@ -22,6 +23,7 @@ public:
 
 public:
     Matrix(int cols, int rows, T val = T{});
+    Matrix(std::initializer_list<std::initializer_list<T>> list);
 
     static Matrix eye(int n, int m);
 
@@ -71,7 +73,6 @@ public:
     ProxyRow operator[](int m) { return ProxyRow(data[m]); }
     const ProxyRow operator[](int m) const { return ProxyRow(data[m]); }
 };
-
 
 template <typename T>
 int Matrix<T>::ncols() const { return cols; }
@@ -148,7 +149,7 @@ template <typename T>
 Matrix<T> Matrix<T>::less(const Matrix &other) const
 {
     Matrix<T> result(cols, rows, 0);
-    
+
     for (int i = 0; i < rows; ++i)
         for (int k = 0; k < cols; ++k)
             if (data[i][k] < other[i][k])
@@ -216,6 +217,19 @@ Matrix<T>::Matrix(int cols, int rows, T val) : data(new T *[rows]), cols(cols), 
         data[i] = new T[cols];
         for (int k = 0; k < cols; ++k)
             data[i][k] = val;
+    }
+}
+
+template <typename T>
+Matrix<T>::Matrix(std::initializer_list<std::initializer_list<T>> initList) : Matrix<T>((*initList.begin()).size(), initList.size())
+{
+    int x_{}, y_;
+    for (auto x : initList)
+    {
+        y_ = 0;
+        for (auto y : x)
+            data[x_][y_++] = y;
+        ++x_;
     }
 }
 
@@ -308,13 +322,4 @@ Matrix<T>::~Matrix()
     delete[] data;
 }
 
-
-
-
-
-
-
-
 #endif
-
-
