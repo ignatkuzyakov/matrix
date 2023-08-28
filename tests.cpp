@@ -89,10 +89,10 @@ TEST(test9, transpose)
 
 TEST(test10, initList)
 {
-    Matrix matrix1 (2, 2, 3);
+    Matrix matrix1(2, 2, 3);
     Matrix matrix2 = {{3, 3},
                       {3, 3}};
-                      
+
     EXPECT_EQ(matrix1, matrix2);
 }
 
@@ -101,8 +101,12 @@ TEST(test11, types)
     Matrix matrixFloat = {{1.0f}};
     Matrix matrixBoolTrue = {{true}};
     Matrix matrixBoolFalse = {{false}};
+    Matrix matrixMatrixInt(2, 2, Matrix<int>(2, 2, 1));
 
     EXPECT_TRUE     (matrixBoolTrue[0][0]);
     EXPECT_FALSE    (matrixBoolFalse[0][0]);
     EXPECT_FLOAT_EQ (matrixFloat[0][0], 1.0f);
+    EXPECT_EQ       (matrixMatrixInt[0][0], Matrix<int>(2, 2, 1));
 }
+
+

@@ -15,6 +15,8 @@ class Matrix
 public:
     Matrix(const Matrix &rhs);
     Matrix(Matrix &&rhs);
+    Matrix(){};
+
 
     Matrix &operator=(const Matrix &rhs);
     Matrix &operator=(Matrix &&rhs);
@@ -22,7 +24,7 @@ public:
     ~Matrix();
 
 public:
-    Matrix(int cols, int rows, T val = T{});
+    Matrix(int cols, int rows, T val = {});
     Matrix(std::initializer_list<std::initializer_list<T>> list);
 
     static Matrix eye(int n, int m);
@@ -285,11 +287,6 @@ Matrix<T>::Matrix(const Matrix<T> &rhs) : data(safe_copy<T>((const T **)rhs.data
 template <typename T>
 Matrix<T> &Matrix<T>::operator=(const Matrix<T> &rhs)
 {
-    if (rhs.cols != cols || rhs.rows != rows)
-    {
-        std::cout << "rhs.cols != cols || rhs.rows != rows" << std::endl;
-        return *this;
-    }
     Matrix tmp(rhs); // ex
                      //--------------------------------------//
     swap(tmp);       // noex
