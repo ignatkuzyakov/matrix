@@ -9,7 +9,7 @@
 template <typename T>
 class Matrix
 {
-    int rows, cols;
+    int rows{}, cols{};
     T **data = nullptr;
 
 public:
@@ -42,8 +42,11 @@ public:
     // The det method using the sum of the products
     // of the elements of any one row or column and their cofactors.
     T det() const;
+
+private:
     T det(Matrix<T> matrix) const;
 
+public:
     void swap(Matrix &rhs) noexcept;
 
     bool operator==(const Matrix<T> &rhs) const;
@@ -85,20 +88,18 @@ int Matrix<T>::nrows() const { return rows; }
 template <typename T>
 Matrix<T> Matrix<T>::eye(int n, int m)
 {
+    assert(n == m);
+
     Matrix<T> result(n, m, 0);
-    if (n == m)
-
-        for (int i = 0; i < m; ++i)
-            result[i][i] = 1;
-
-    else
-        std::cout << "cols != rows" << std::endl;
+ 
+    for (int i = 0; i < m; ++i)
+        result[i][i] = 1;
 
     return result;
 }
 
 template <typename T>
-T Matrix<T>::det() const { return det(*this); }
+T Matrix<T>::det() const { assert(cols == rows); return det(*this); }
 
 template <typename T>
 T Matrix<T>::det(Matrix<T> matrix) const
@@ -139,6 +140,8 @@ T Matrix<T>::det(Matrix<T> matrix) const
 template <typename T>
 bool Matrix<T>::operator==(const Matrix<T> &rhs) const
 {
+    assert((cols == rhs.ncols()) && (rows == rhs.nrows()));
+    
     for (int i = 0; i < rows; ++i)
         for (int k = 0; k < cols; ++k)
             if (data[i][k] != rhs[i][k])
@@ -150,6 +153,8 @@ bool Matrix<T>::operator==(const Matrix<T> &rhs) const
 template <typename T>
 Matrix<T> Matrix<T>::less(const Matrix &other) const
 {
+    assert((cols == other.ncols()) && (rows == other.nrows()));
+
     Matrix<T> result(cols, rows, 0);
 
     for (int i = 0; i < rows; ++i)
@@ -163,6 +168,8 @@ Matrix<T> Matrix<T>::less(const Matrix &other) const
 template <typename T>
 Matrix<T> Matrix<T>::equal(const Matrix &other) const
 {
+    assert((cols == other.ncols()) && (rows == other.nrows()));
+
     Matrix<T> result(cols, rows, 0);
 
     for (int i = 0; i < rows; ++i)
@@ -200,13 +207,12 @@ Matrix<T> &Matrix<T>::transpose() &
 template <typename T>
 T Matrix<T>::trace() const
 {
+    assert(cols == rows);
+
     T result{};
 
-    if (cols == rows)
-        for (int i = 0; i < cols; ++i)
-            result += data[i][i];
-    else
-        std::cout << "cols != rows" << std::endl;
+    for (int i = 0; i < cols; ++i)
+        result += data[i][i];
 
     return result;
 }
