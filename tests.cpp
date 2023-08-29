@@ -108,5 +108,3 @@ TEST(test11, types)
     EXPECT_FLOAT_EQ (matrixFloat[0][0], 1.0f);
     EXPECT_EQ       (matrixMatrixInt[0][0], Matrix<int>(2, 2, 1));
 }
-
-

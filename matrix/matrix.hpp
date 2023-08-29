@@ -14,12 +14,11 @@ class Matrix
 
 public:
     Matrix(const Matrix &rhs);
-    Matrix(Matrix &&rhs);
+    Matrix(Matrix &&rhs) noexcept;
     Matrix(){};
 
-
     Matrix &operator=(const Matrix &rhs);
-    Matrix &operator=(Matrix &&rhs);
+    Matrix &operator=(Matrix &&rhs) noexcept;
 
     ~Matrix();
 
@@ -300,13 +299,13 @@ Matrix<T> &Matrix<T>::operator=(const Matrix<T> &rhs)
 }
 
 template <typename T>
-Matrix<T>::Matrix(Matrix<T> &&rhs) : data(rhs.data), rows(rhs.rows), cols(rhs.cols)
+Matrix<T>::Matrix(Matrix<T> &&rhs) noexcept : data(rhs.data), rows(rhs.rows), cols(rhs.cols)
 {
     rhs.data = nullptr;
 }
 
 template <typename T>
-Matrix<T> &Matrix<T>::operator=(Matrix<T> &&rhs)
+Matrix<T> &Matrix<T>::operator=(Matrix<T> &&rhs) noexcept
 {
     if (&rhs == this)
         return *this;
