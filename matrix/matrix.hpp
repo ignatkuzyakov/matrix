@@ -50,6 +50,24 @@ public:
 
     bool operator==(const Matrix<T> &rhs) const;
 
+    Matrix<T> operator+(const Matrix<T> &rhs) const;
+    Matrix<T> &operator+=(const Matrix<T> &rhs);
+    Matrix<T> &operator++(int);
+    Matrix<T> &operator++();
+
+    Matrix<T> operator-(const Matrix<T> &rhs) const;
+    Matrix<T> &operator-=(const Matrix<T> &rhs);
+    Matrix<T> &operator--(int);
+    Matrix<T> &operator--();
+
+    Matrix<T> operator*(const Matrix<T> &rhs) const;
+    Matrix<T> &operator*=(const Matrix<T> &rhs);
+    Matrix<T> operator*(T) const;
+
+    Matrix<T> operator/(const Matrix<T> &rhs) const;
+    Matrix<T> &operator/=(const Matrix<T> &rhs);
+    Matrix<T> operator/(T) const;
+
     // Compares matrix1 and matrix2 ((rows1 == rows2) && (cols1 == cols2)),
     // element by element,
     // returning rows x cols matrix containing 1 where predicate is true, and 0 otherwise.
@@ -79,6 +97,47 @@ public:
 };
 
 template <typename T>
+Matrix<T> Matrix<T>::operator+(const Matrix<T> &rhs) const
+{
+    assert((rhs.ncols == cols) && (rhs.nrows == rows));
+    Matrix<T> tmp(rhs);
+    for (int i = 0; i < rows; i++)
+        for (int j = 0; j < cols; j++)
+            tmp[i][j] += data[i][j];
+        
+        return tmp;
+}
+template <typename T>
+Matrix<T> &Matrix<T>::operator+=(const Matrix<T> &rhs) {}
+template <typename T>
+Matrix<T> &Matrix<T>::operator++(int) {}
+template <typename T>
+Matrix<T> &Matrix<T>::operator++() {}
+template <typename T>
+Matrix<T> Matrix<T>::operator-(const Matrix<T> &rhs) const {}
+template <typename T>
+Matrix<T> &Matrix<T>::operator-=(const Matrix<T> &rhs) {}
+template <typename T>
+Matrix<T> &Matrix<T>::operator--(int) {}
+template <typename T>
+Matrix<T> &Matrix<T>::operator--() {}
+template <typename T>
+Matrix<T> Matrix<T>::operator*(const Matrix<T> &rhs) const {}
+template <typename T>
+Matrix<T> &Matrix<T>::operator*=(const Matrix<T> &rhs) {}
+template <typename T>
+Matrix<T> Matrix<T>::operator*(T) const {}
+
+template <typename T>
+Matrix<T> Matrix<T>::operator/(const Matrix<T> &rhs) const
+{
+}
+template <typename T>
+Matrix<T> &Matrix<T>::operator/=(const Matrix<T> &rhs) {}
+template <typename T>
+Matrix<T> Matrix<T>::operator/(T) const {}
+
+template <typename T>
 int Matrix<T>::ncols() const { return cols; }
 
 template <typename T>
@@ -90,7 +149,7 @@ Matrix<T> Matrix<T>::eye(int n, int m)
     assert(n == m);
 
     Matrix<T> result(n, m, 0);
- 
+
     for (int i = 0; i < m; ++i)
         result[i][i] = 1;
 
@@ -98,7 +157,11 @@ Matrix<T> Matrix<T>::eye(int n, int m)
 }
 
 template <typename T>
-T Matrix<T>::det() const { assert(cols == rows); return det(*this); }
+T Matrix<T>::det() const
+{
+    assert(cols == rows);
+    return det(*this);
+}
 
 template <typename T>
 T Matrix<T>::det(Matrix<T> matrix) const
@@ -140,7 +203,7 @@ template <typename T>
 bool Matrix<T>::operator==(const Matrix<T> &rhs) const
 {
     assert((cols == rhs.ncols()) && (rows == rhs.nrows()));
-    
+
     for (int i = 0; i < rows; ++i)
         for (int k = 0; k < cols; ++k)
             if (data[i][k] != rhs[i][k])
