@@ -119,9 +119,8 @@ Matrix<T> Matrix<T>::operator+(const Matrix<T> &rhs) const
     return tmp;
 }
 
-template <typename T>
-Matrix<T> &Matrix<T>::operator+=(const Matrix<T> &rhs)
-{ return (*this = rhs + *this); }
+template <typename T> 
+Matrix<T> &Matrix<T>::operator+=(const Matrix<T> &rhs) { return (*this = rhs + *this); }
 
 template <typename T>
 Matrix<T> Matrix<T>::operator+() const { return *this; }
