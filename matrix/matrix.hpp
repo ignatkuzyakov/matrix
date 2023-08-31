@@ -31,6 +31,7 @@ public:
 public: // operations
     Matrix &negate() &;
     Matrix &transpose() &;
+    Matrix &invert() &;
 
 public:
     int ncols() const;
@@ -52,21 +53,29 @@ public:
 
     Matrix<T> operator+(const Matrix<T> &rhs) const;
     Matrix<T> &operator+=(const Matrix<T> &rhs);
-    Matrix<T> &operator++(int);
+    Matrix<T> operator+(const T &val) const;
+    Matrix<T> &operator+=(const T &val);
+    Matrix<T> operator++(int);
     Matrix<T> &operator++();
+    Matrix<T> operator+() const;
 
     Matrix<T> operator-(const Matrix<T> &rhs) const;
     Matrix<T> &operator-=(const Matrix<T> &rhs);
-    Matrix<T> &operator--(int);
+    Matrix<T> operator-(const T &val) const;
+    Matrix<T> &operator-=(const T &val);
+    Matrix<T> operator--(int);
     Matrix<T> &operator--();
+    Matrix<T> operator-() const;
 
     Matrix<T> operator*(const Matrix<T> &rhs) const;
     Matrix<T> &operator*=(const Matrix<T> &rhs);
-    Matrix<T> operator*(T) const;
+    Matrix<T> operator*(const T &val) const;
+    Matrix<T> &operator*=(const T &val);
 
     Matrix<T> operator/(const Matrix<T> &rhs) const;
     Matrix<T> &operator/=(const Matrix<T> &rhs);
-    Matrix<T> operator/(T) const;
+    Matrix<T> operator/(const T &val) const;
+    Matrix<T> &operator/=(const T &val);
 
     // Compares matrix1 and matrix2 ((rows1 == rows2) && (cols1 == cols2)),
     // element by element,
@@ -99,43 +108,139 @@ public:
 template <typename T>
 Matrix<T> Matrix<T>::operator+(const Matrix<T> &rhs) const
 {
-    assert((rhs.ncols == cols) && (rhs.nrows == rows));
+    assert((rhs.ncols() == cols) && (rhs.nrows() == rows));
+
     Matrix<T> tmp(rhs);
+
     for (int i = 0; i < rows; i++)
         for (int j = 0; j < cols; j++)
             tmp[i][j] += data[i][j];
-        
-        return tmp;
+
+    return tmp;
 }
+
 template <typename T>
-Matrix<T> &Matrix<T>::operator+=(const Matrix<T> &rhs) {}
+Matrix<T> &Matrix<T>::operator+=(const Matrix<T> &rhs)
+{ return (*this = rhs + *this); }
+
 template <typename T>
-Matrix<T> &Matrix<T>::operator++(int) {}
+Matrix<T> Matrix<T>::operator+() const { return *this; }
+
 template <typename T>
-Matrix<T> &Matrix<T>::operator++() {}
+Matrix<T> Matrix<T>::operator-() const
+{
+    Matrix<T> tmp(*this);
+
+    return tmp.negate();
+}
+
 template <typename T>
-Matrix<T> Matrix<T>::operator-(const Matrix<T> &rhs) const {}
+Matrix<T> Matrix<T>::operator++(int)
+{
+    Matrix<T> tmp(*this);
+
+    *this += Matrix<T>(cols, rows, 1);
+
+    return tmp;
+}
+
 template <typename T>
-Matrix<T> &Matrix<T>::operator-=(const Matrix<T> &rhs) {}
+Matrix<T> Matrix<T>::operator+(const T &val) const { return (*this + Matrix<T>(cols, rows, val)); }
+
 template <typename T>
-Matrix<T> &Matrix<T>::operator--(int) {}
+Matrix<T> &Matrix<T>::operator+=(const T &val) { return (*this = *this + val); }
+
 template <typename T>
-Matrix<T> &Matrix<T>::operator--() {}
+Matrix<T> &Matrix<T>::operator++() { return (*this += Matrix<T>(cols, rows, 1)); }
+
 template <typename T>
-Matrix<T> Matrix<T>::operator*(const Matrix<T> &rhs) const {}
+Matrix<T> Matrix<T>::operator-(const Matrix<T> &rhs) const
+{
+    Matrix<T> tmp(*this);
+
+    return (tmp += (-rhs));
+}
+
 template <typename T>
-Matrix<T> &Matrix<T>::operator*=(const Matrix<T> &rhs) {}
+Matrix<T> &Matrix<T>::operator-=(const Matrix<T> &rhs) { return (*this = *this - rhs); }
+
 template <typename T>
-Matrix<T> Matrix<T>::operator*(T) const {}
+Matrix<T> Matrix<T>::operator-(const T &val) const { return (*this - Matrix<T>(cols, rows, val)); }
+
+template <typename T>
+Matrix<T> &Matrix<T>::operator-=(const T &val) { return (*this = *this - val); }
+
+template <typename T>
+Matrix<T> Matrix<T>::operator--(int)
+{
+    Matrix<T> tmp(*this);
+
+    *this -= Matrix<T>(cols, rows, 1);
+
+    return tmp;
+}
+
+template <typename T>
+Matrix<T> &Matrix<T>::operator--() { return (*this -= Matrix<T>(cols, rows, 1)); }
+
+template <typename T>
+Matrix<T> Matrix<T>::operator*(const Matrix<T> &rhs) const
+{
+    assert(cols == rhs.nrows());
+
+    Matrix<T> tmp(rhs.cols, rows);
+
+    for (int i = 0, nrows = tmp.nrows(); i < nrows; ++i)
+        for (int j = 0, ncols = tmp.ncols(); j < ncols; ++j)
+            for (int g = 0; g < cols; ++g)
+                tmp[i][j] += (data[i][g] * rhs[g][j]);
+
+    return tmp;
+}
+
+template <typename T>
+Matrix<T> &Matrix<T>::operator*=(const Matrix<T> &rhs) { return (*this = *this * rhs); }
+
+template <typename T>
+Matrix<T> Matrix<T>::operator*(const T &val) const
+{
+    Matrix<T> tmp(*this);
+
+    for (int i = 0; i < rows; i++)
+        for (int j = 0; j < cols; j++)
+            tmp[i][j] *= val;
+
+    return tmp;
+}
+
+template <typename T>
+Matrix<T> &Matrix<T>::operator*=(const T &val) { return (*this = *this * val); }
 
 template <typename T>
 Matrix<T> Matrix<T>::operator/(const Matrix<T> &rhs) const
 {
+    Matrix tmp(rhs);
+
+    return (*this * tmp.invert());
 }
+
 template <typename T>
-Matrix<T> &Matrix<T>::operator/=(const Matrix<T> &rhs) {}
+Matrix<T> &Matrix<T>::operator/=(const Matrix<T> &rhs) { return (*this = (*this / rhs)); }
+
 template <typename T>
-Matrix<T> Matrix<T>::operator/(T) const {}
+Matrix<T> Matrix<T>::operator/(const T &val) const
+{
+    Matrix<T> tmp(*this);
+
+    for (int i = 0; i < rows; i++)
+        for (int j = 0; j < cols; j++)
+            tmp[i][j] /= val;
+
+    return tmp;
+}
+
+template <typename T>
+Matrix<T> &Matrix<T>::operator/=(const T &val) { return (*this = *this / val); }
 
 template <typename T>
 int Matrix<T>::ncols() const { return cols; }
@@ -154,6 +259,43 @@ Matrix<T> Matrix<T>::eye(int n, int m)
         result[i][i] = 1;
 
     return result;
+}
+
+template <typename T>
+Matrix<T> &Matrix<T>::invert() &
+{
+    T vl = this->det();
+
+    assert(vl != 0);
+
+    Matrix<T> subMatrix(cols - 1, cols - 1);
+
+    Matrix tmp(*this);
+
+    for (int i = 0; i < cols; i++)
+    {
+        for (int k = 0; k < cols; k++)
+        {
+            for (int g = 0; g < cols; g++)
+            {
+                for (int j = 0; j < cols; j++)
+                {
+                    if (j == k || i == g) continue;
+                    else if ((j < k) && (g > i)) subMatrix[g - 1][j] = data[g][j];
+                    else if ((j > k) && (g > i)) subMatrix[g - 1][j - 1] = data[g][j];
+                    else if ((j > k) && (g < i)) subMatrix[g][j - 1] = data[g][j];
+                    else                         subMatrix[g][j] = data[g][j];
+                }
+            }
+            tmp[i][k] = std::pow(-1, k + i) * subMatrix.det();
+        }
+    }
+
+    swap(tmp);
+
+    this->transpose();
+
+    return (*this /= vl);
 }
 
 template <typename T>

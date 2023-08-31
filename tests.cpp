@@ -103,8 +103,46 @@ TEST(test11, types)
     Matrix matrixBoolFalse = {{false}};
     Matrix matrixMatrixInt(2, 2, Matrix<int>(2, 2, 1));
 
-    EXPECT_TRUE     (matrixBoolTrue[0][0]);
-    EXPECT_FALSE    (matrixBoolFalse[0][0]);
-    EXPECT_FLOAT_EQ (matrixFloat[0][0], 1.0f);
-    EXPECT_EQ       (matrixMatrixInt[0][0], Matrix<int>(2, 2, 1));
+    EXPECT_TRUE(matrixBoolTrue[0][0]);
+    EXPECT_FALSE(matrixBoolFalse[0][0]);
+    EXPECT_FLOAT_EQ(matrixFloat[0][0], 1.0f);
+    EXPECT_EQ(matrixMatrixInt[0][0], Matrix<int>(2, 2, 1));
+}
+
+TEST(test12, operators)
+{
+    Matrix matrix1(2, 3, 2);
+    Matrix matrix2(3, 2, 3);
+    Matrix matrix3(3, 3, 1);
+
+    Matrix matrix4 = {{3, 4}, {5, 7}};
+    Matrix matrix5 = {{2, 5, 7}, {6, 3, 4}, {5, -2, -3}};
+
+    Matrix matrix6 = {{2, 5, 7}, {6, 3, 4}, {5, -2, -3}};
+    Matrix matrix7 = {{4, 5, 1}, {3, 133, 34}, {54, -2, -3}};
+
+    EXPECT_EQ(matrix1 * matrix2, Matrix(3, 3, 12));
+    EXPECT_EQ(matrix1 *= matrix2, Matrix(3, 3, 12));
+    EXPECT_EQ(matrix1 * 2, Matrix(3, 3, 24));
+    EXPECT_EQ(matrix1 + 2, Matrix(3, 3, 14));
+    EXPECT_EQ(matrix1 += 2, Matrix(3, 3, 14));
+    EXPECT_EQ(++matrix1, Matrix(3, 3, 15));
+    EXPECT_EQ(matrix1++, Matrix(3, 3, 15));
+    EXPECT_EQ(matrix1 - 2, Matrix(3, 3, 14));
+    EXPECT_EQ(matrix1 -= 2, Matrix(3, 3, 14));
+    EXPECT_EQ(--matrix1, Matrix(3, 3, 13));
+    EXPECT_EQ(matrix1--, Matrix(3, 3, 13));
+    EXPECT_EQ(matrix1 + matrix3, Matrix(3, 3, 13));
+    EXPECT_EQ(matrix1 += matrix3, Matrix(3, 3, 13));
+    EXPECT_EQ(matrix1 - matrix3, Matrix(3, 3, 12));
+    EXPECT_EQ(matrix1 -= matrix3, Matrix(3, 3, 12));
+    EXPECT_EQ(matrix1 *= 2, Matrix(3, 3, 24));
+    EXPECT_EQ(matrix1 / 2, Matrix(3, 3, 12));
+    EXPECT_EQ(matrix1 /= 2, Matrix(3, 3, 12));
+
+    EXPECT_EQ(matrix4.invert(), Matrix({{7, -4}, {-5, 3}}));
+    EXPECT_EQ(matrix5.invert(), Matrix({{1, -1, 1}, {-38, 41, -34}, {27, -29, 24}}));
+
+    EXPECT_EQ(matrix7 / matrix6, matrix7 * Matrix({{1, -1, 1}, {-38, 41, -34}, {27, -29, 24}}));
+    EXPECT_EQ(matrix7 /= matrix6, matrix7 * Matrix({{1, -1, 1}, {-38, 41, -34}, {27, -29, 24}}));
 }
