@@ -11,16 +11,16 @@ class MatrixBuf
 {
 protected:
     int rows, cols;
-    T **data = nullptr;
+    T **data;
 
 protected:
-    MatrixBuf &operator=(const MatrixBuf &) = delete;
+    MatrixBuf &operator=(const MatrixBuf &rhs) = delete;
     MatrixBuf &operator=(MatrixBuf &&rhs) noexcept;
 
-    MatrixBuf(const MatrixBuf &) = delete;
+    MatrixBuf(const MatrixBuf &rhs) = delete;
     MatrixBuf(MatrixBuf &&rhs) noexcept;
 
-    MatrixBuf(int cols = 0, int rows = 0);
+    MatrixBuf(int cols, int rows);
     MatrixBuf(T **data, int cols, int rows);
     ~MatrixBuf();
 
