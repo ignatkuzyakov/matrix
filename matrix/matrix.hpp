@@ -7,25 +7,85 @@
 #include <vector>
 
 template <typename T>
-class Matrix
+class MatrixBuf
 {
-    int rows{}, cols{};
+protected:
+    int rows, cols;
     T **data = nullptr;
 
-public:
-    Matrix(const Matrix &rhs);
-    Matrix(Matrix &&rhs) noexcept;
-    Matrix(){};
+protected:
+    MatrixBuf &operator=(const MatrixBuf &) = delete;
+    MatrixBuf &operator=(MatrixBuf &&rhs) noexcept;
 
+    MatrixBuf(const MatrixBuf &) = delete;
+    MatrixBuf(MatrixBuf &&rhs) noexcept;
+
+    MatrixBuf(int cols = 0, int rows = 0);
+    MatrixBuf(T **data, int cols, int rows);
+    ~MatrixBuf();
+
+    void swap(MatrixBuf &rhs) noexcept;
+};
+
+template <typename T>
+MatrixBuf<T>::MatrixBuf(int cols, int rows) : data((rows || cols) ? (new T *[rows]) : (nullptr)), cols(cols), rows(rows)
+{
+    for (int i = 0; i < rows; ++i) data[i] = new T[cols];
+}
+
+template <typename T>
+MatrixBuf<T>::MatrixBuf(T **data, int cols, int rows) : data(data), cols(cols), rows(rows) {}
+
+template <typename T>
+MatrixBuf<T>::MatrixBuf(MatrixBuf<T> &&rhs) noexcept : data(rhs.data), rows(rhs.rows), cols(rhs.cols)
+{
+    rhs.data = nullptr;
+    rhs.rows = 0;
+    rhs.cols = 0;
+}
+
+template <typename T>
+MatrixBuf<T> &MatrixBuf<T>::operator=(MatrixBuf<T> &&rhs) noexcept
+{
+    swap(rhs);
+    return *this;
+}
+
+template <typename T>
+MatrixBuf<T>::~MatrixBuf()
+{
+    for (int i = 0; i < rows; ++i) delete[] data[i];
+
+    delete[] data;
+}
+
+template <typename T>
+void MatrixBuf<T>::swap(MatrixBuf<T> &rhs) noexcept
+{
+    std::swap(data, rhs.data);
+    std::swap(cols, rhs.cols);
+    std::swap(rows, rhs.rows);
+}
+
+template <typename T>
+class Matrix : private MatrixBuf<T>
+{
+    using MatrixBuf<T>::data;
+    using MatrixBuf<T>::rows;
+    using MatrixBuf<T>::cols;
+    using MatrixBuf<T>::swap;
+
+public:
     Matrix &operator=(const Matrix &rhs);
-    Matrix &operator=(Matrix &&rhs) noexcept;
+    Matrix &operator=(Matrix &&rhs) noexcept = default;
 
-    ~Matrix();
+    Matrix(const Matrix &rhs);
+    Matrix(Matrix &&rhs) noexcept = default;
+
+    Matrix(std::initializer_list<std::initializer_list<T>> list);
+    explicit Matrix(int cols = 0, int rows = 0, T val = {});
 
 public:
-    Matrix(int cols, int rows, T val = {});
-    Matrix(std::initializer_list<std::initializer_list<T>> list);
-
     static Matrix eye(int n, int m);
 
 public: // operations
@@ -47,8 +107,6 @@ private:
     T det(Matrix<T> matrix) const;
 
 public:
-    void swap(Matrix &rhs) noexcept;
-
     bool operator==(const Matrix<T> &rhs) const;
 
     Matrix<T> operator+(const Matrix<T> &rhs) const;
@@ -106,6 +164,134 @@ public:
 };
 
 template <typename T>
+T **safe_copy(T **src, int rows, int cols)
+{
+    T **dest = new T *[rows];
+    for (int i = 0; i < rows; ++i)
+        dest[i] = new T[cols];
+    try
+    {
+        for (int i = 0; i < rows; ++i)
+            for (int j = 0; j < cols; ++j)
+                dest[i][j] = src[i][j];
+    }
+    catch (...)
+    {
+        for (int i = 0; i < rows; ++i)
+        {
+            delete[] dest[i];
+
+            delete[] dest;
+            throw;
+        }
+    }
+    return dest;
+}
+
+template <typename T>
+Matrix<T>::Matrix(const Matrix<T> &rhs) : MatrixBuf<T>(safe_copy<T>(rhs.data, rhs.rows, rhs.cols), rhs.cols, rhs.rows) {}
+
+template <typename T>
+Matrix<T> &Matrix<T>::operator=(const Matrix<T> &rhs)
+{
+    Matrix tmp(rhs); // ex
+                     //--------------------------------------//
+    swap(tmp);       // noex
+    return *this;
+}
+
+template <typename T>
+Matrix<T>::Matrix(int cols, int rows, T val) : MatrixBuf<T>(cols, rows)
+{
+    for (int i = 0; i < rows; ++i)
+        for (int k = 0; k < cols; ++k)
+            data[i][k] = val;
+}
+
+template <typename T>
+Matrix<T>::Matrix(std::initializer_list<std::initializer_list<T>> initList) : MatrixBuf<T>((*initList.begin()).size(), initList.size())
+{
+    int rws = 0, cls;
+    for (auto x : initList)
+    {
+        cls = 0;
+        for (auto y : x)
+            data[rws][cls++] = y;
+        ++rws;
+    }
+}
+
+template <typename T>
+Matrix<T> &Matrix<T>::invert() &
+{
+    T vl = this->det();
+
+    assert(vl != 0);
+
+    Matrix<T> subMatrix(cols - 1, cols - 1);
+
+    Matrix tmp(*this);
+
+    for (int i = 0; i < cols; i++)
+    {
+        for (int k = 0; k < cols; k++)
+        {
+            for (int g = 0; g < cols; g++)
+            {
+                for (int j = 0; j < cols; j++)
+                {
+                    if (j == k || i == g) continue;
+                    else if ((j < k) && (g > i)) subMatrix[g - 1][j] = data[g][j];
+                    else if ((j > k) && (g > i)) subMatrix[g - 1][j - 1] = data[g][j];
+                    else if ((j > k) && (g < i)) subMatrix[g][j - 1] = data[g][j];
+                    else                         subMatrix[g][j] = data[g][j];
+                }
+            }
+            tmp[i][k] = std::pow(-1, k + i) * subMatrix.det();
+        }
+    }
+
+    swap(tmp);
+
+    this->transpose();
+
+    return (*this /= vl);
+}
+
+template <typename T>
+T Matrix<T>::det() const { assert(cols == rows); return det(*this); }
+
+template <typename T>
+T Matrix<T>::det(Matrix<T> matrix) const
+{
+    int sz_ = matrix.ncols();
+
+    if      (sz_ == 1)  return matrix[0][0];
+    else if (sz_ == 2)  return matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
+    else
+    {
+        T resultD = 0;
+        for (int k = 0; k < sz_; k++)
+        {
+            Matrix<T> subMatrix(sz_ - 1, sz_ - 1);
+
+            for (int i = 1; i < sz_; i++)
+            {
+                for (int j = 0; j < sz_; j++)
+                {
+                    if (j == k) continue;
+                    else if (j < k) subMatrix[i - 1][j] = matrix[i][j];
+                    else            subMatrix[i - 1][j - 1] = matrix[i][j];
+                }
+            }
+            resultD += std::pow(-1, k + 2) * matrix[0][k] * det(subMatrix);
+        }
+        return resultD;
+    }
+}
+
+
+template <typename T>
 Matrix<T> Matrix<T>::operator+(const Matrix<T> &rhs) const
 {
     assert((rhs.ncols() == cols) && (rhs.nrows() == rows));
@@ -119,7 +305,7 @@ Matrix<T> Matrix<T>::operator+(const Matrix<T> &rhs) const
     return tmp;
 }
 
-template <typename T> 
+template <typename T>
 Matrix<T> &Matrix<T>::operator+=(const Matrix<T> &rhs) { return (*this = rhs + *this); }
 
 template <typename T>
@@ -261,86 +447,6 @@ Matrix<T> Matrix<T>::eye(int n, int m)
 }
 
 template <typename T>
-Matrix<T> &Matrix<T>::invert() &
-{
-    T vl = this->det();
-
-    assert(vl != 0);
-
-    Matrix<T> subMatrix(cols - 1, cols - 1);
-
-    Matrix tmp(*this);
-
-    for (int i = 0; i < cols; i++)
-    {
-        for (int k = 0; k < cols; k++)
-        {
-            for (int g = 0; g < cols; g++)
-            {
-                for (int j = 0; j < cols; j++)
-                {
-                    if (j == k || i == g) continue;
-                    else if ((j < k) && (g > i)) subMatrix[g - 1][j] = data[g][j];
-                    else if ((j > k) && (g > i)) subMatrix[g - 1][j - 1] = data[g][j];
-                    else if ((j > k) && (g < i)) subMatrix[g][j - 1] = data[g][j];
-                    else                         subMatrix[g][j] = data[g][j];
-                }
-            }
-            tmp[i][k] = std::pow(-1, k + i) * subMatrix.det();
-        }
-    }
-
-    swap(tmp);
-
-    this->transpose();
-
-    return (*this /= vl);
-}
-
-template <typename T>
-T Matrix<T>::det() const
-{
-    assert(cols == rows);
-    return det(*this);
-}
-
-template <typename T>
-T Matrix<T>::det(Matrix<T> matrix) const
-{
-    int sz_ = matrix.ncols();
-
-    if (sz_ == 1)
-        return matrix[0][0];
-
-    else if (sz_ == 2)
-        return matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
-
-    else
-    {
-        T resultD = 0;
-        for (int k = 0; k < sz_; k++)
-        {
-            Matrix<T> subMatrix(sz_ - 1, sz_ - 1);
-
-            for (int i = 1; i < sz_; i++)
-            {
-                for (int j = 0; j < sz_; j++)
-                {
-                    if (j == k)
-                        continue;
-                    else if (j < k)
-                        subMatrix[i - 1][j] = matrix[i][j];
-                    else
-                        subMatrix[i - 1][j - 1] = matrix[i][j];
-                }
-            }
-            resultD += std::pow(-1, k + 2) * matrix[0][k] * det(subMatrix);
-        }
-        return resultD;
-    }
-}
-
-template <typename T>
 bool Matrix<T>::operator==(const Matrix<T> &rhs) const
 {
     assert((cols == rhs.ncols()) && (rows == rhs.nrows()));
@@ -421,63 +527,6 @@ T Matrix<T>::trace() const
 }
 
 template <typename T>
-Matrix<T>::Matrix(int cols, int rows, T val) : data(new T *[rows]), cols(cols), rows(rows)
-{
-    for (int i = 0; i < rows; ++i)
-    {
-        data[i] = new T[cols];
-        for (int k = 0; k < cols; ++k)
-            data[i][k] = val;
-    }
-}
-
-template <typename T>
-Matrix<T>::Matrix(std::initializer_list<std::initializer_list<T>> initList) : Matrix<T>((*initList.begin()).size(), initList.size())
-{
-    int x_{}, y_;
-    for (auto x : initList)
-    {
-        y_ = 0;
-        for (auto y : x)
-            data[x_][y_++] = y;
-        ++x_;
-    }
-}
-
-template <typename T>
-void Matrix<T>::swap(Matrix<T> &rhs) noexcept
-{
-    std::swap(data, rhs.data);
-    std::swap(cols, rhs.cols);
-    std::swap(rows, rhs.rows);
-}
-
-template <typename T>
-T **safe_copy(const T **src, int rows, int cols)
-{
-    T **dest = new T *[rows];
-    for (int i = 0; i < rows; ++i)
-        dest[i] = new T[cols];
-    try
-    {
-        for (int i = 0; i < rows; ++i)
-            for (int j = 0; j < cols; ++j)
-                dest[i][j] = src[i][j];
-    }
-    catch (...)
-    {
-        for (int i = 0; i < rows; ++i)
-        {
-            delete[] dest[i];
-
-            delete[] dest;
-            throw;
-        }
-    }
-    return dest;
-}
-
-template <typename T>
 void Matrix<T>::dump(std::ostream &os) const
 {
     for (int i = 0; i < rows; ++i)
@@ -486,46 +535,6 @@ void Matrix<T>::dump(std::ostream &os) const
             os << data[i][k] << ' ';
         os << std::endl;
     }
-}
-
-template <typename T>
-Matrix<T>::Matrix(const Matrix<T> &rhs) : data(safe_copy<T>((const T **)rhs.data, rows, cols)),
-                                          rows(rhs.rows),
-                                          cols(rhs.cols) {}
-
-template <typename T>
-Matrix<T> &Matrix<T>::operator=(const Matrix<T> &rhs)
-{
-    Matrix tmp(rhs); // ex
-                     //--------------------------------------//
-    swap(tmp);       // noex
-    return *this;
-}
-
-template <typename T>
-Matrix<T>::Matrix(Matrix<T> &&rhs) noexcept : data(rhs.data), rows(rhs.rows), cols(rhs.cols)
-{
-    rhs.data = nullptr;
-}
-
-template <typename T>
-Matrix<T> &Matrix<T>::operator=(Matrix<T> &&rhs) noexcept
-{
-    if (&rhs == this)
-        return *this;
-
-    swap(rhs);
-    return *this;
-}
-
-template <typename T>
-Matrix<T>::~Matrix()
-{
-    if (data != nullptr)
-        for (int i = 0; i < rows; ++i)
-            delete[] data[i];
-
-    delete[] data;
 }
 
 #endif
