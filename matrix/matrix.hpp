@@ -30,7 +30,18 @@ protected:
 template <typename T>
 MatrixBuf<T>::MatrixBuf(int cols, int rows) : data((rows || cols) ? (new T *[rows]) : (nullptr)), cols(cols), rows(rows)
 {
-    for (int i = 0; i < rows; ++i) data[i] = new T[cols];
+    int constructed = 0;
+    try
+    {
+        for (; constructed < rows; ++constructed)
+            data[constructed] = new T[cols];
+    }
+    catch (...)
+    {
+        for (int k = 0; k < constructed; ++k)
+            delete data[k];
+        throw;
+    }
 }
 
 template <typename T>
@@ -54,7 +65,8 @@ MatrixBuf<T> &MatrixBuf<T>::operator=(MatrixBuf<T> &&rhs) noexcept
 template <typename T>
 MatrixBuf<T>::~MatrixBuf()
 {
-    for (int i = 0; i < rows; ++i) delete[] data[i];
+    for (int i = 0; i < rows; ++i)
+        delete[] data[i];
 
     delete[] data;
 }
@@ -104,36 +116,36 @@ public:
     T det() const;
 
 private:
-    T det(Matrix<T> matrix) const;
+    T det(Matrix matrix) const;
 
 public:
-    bool operator==(const Matrix<T> &rhs) const;
+    bool operator==(const Matrix &rhs) const;
 
-    Matrix<T> operator+(const Matrix<T> &rhs) const;
-    Matrix<T> &operator+=(const Matrix<T> &rhs);
-    Matrix<T> operator+(const T &val) const;
-    Matrix<T> &operator+=(const T &val);
-    Matrix<T> operator++(int);
-    Matrix<T> &operator++();
-    Matrix<T> operator+() const;
+    Matrix operator+(const Matrix &rhs) const;
+    Matrix &operator+=(const Matrix &rhs);
+    Matrix operator+(const T &val) const;
+    Matrix &operator+=(const T &val);
+    Matrix operator++(int);
+    Matrix &operator++();
+    Matrix operator+() const;
 
-    Matrix<T> operator-(const Matrix<T> &rhs) const;
-    Matrix<T> &operator-=(const Matrix<T> &rhs);
-    Matrix<T> operator-(const T &val) const;
-    Matrix<T> &operator-=(const T &val);
-    Matrix<T> operator--(int);
-    Matrix<T> &operator--();
-    Matrix<T> operator-() const;
+    Matrix operator-(const Matrix &rhs) const;
+    Matrix &operator-=(const Matrix &rhs);
+    Matrix operator-(const T &val) const;
+    Matrix &operator-=(const T &val);
+    Matrix operator--(int);
+    Matrix &operator--();
+    Matrix operator-() const;
 
-    Matrix<T> operator*(const Matrix<T> &rhs) const;
-    Matrix<T> &operator*=(const Matrix<T> &rhs);
-    Matrix<T> operator*(const T &val) const;
-    Matrix<T> &operator*=(const T &val);
+    Matrix operator*(const Matrix &rhs) const;
+    Matrix &operator*=(const Matrix &rhs);
+    Matrix operator*(const T &val) const;
+    Matrix &operator*=(const T &val);
 
-    Matrix<T> operator/(const Matrix<T> &rhs) const;
-    Matrix<T> &operator/=(const Matrix<T> &rhs);
-    Matrix<T> operator/(const T &val) const;
-    Matrix<T> &operator/=(const T &val);
+    Matrix operator/(const Matrix &rhs) const;
+    Matrix &operator/=(const Matrix &rhs);
+    Matrix operator/(const T &val) const;
+    Matrix &operator/=(const T &val);
 
     // Compares matrix1 and matrix2 ((rows1 == rows2) && (cols1 == cols2)),
     // element by element,
@@ -203,22 +215,30 @@ Matrix<T> &Matrix<T>::operator=(const Matrix<T> &rhs)
 template <typename T>
 Matrix<T>::Matrix(int cols, int rows, T val) : MatrixBuf<T>(cols, rows)
 {
+   Matrix dest (*this);
+
     for (int i = 0; i < rows; ++i)
         for (int k = 0; k < cols; ++k)
-            data[i][k] = val;
+            dest[i][k] = val;
+
+    swap(dest);
 }
 
 template <typename T>
 Matrix<T>::Matrix(std::initializer_list<std::initializer_list<T>> initList) : MatrixBuf<T>((*initList.begin()).size(), initList.size())
 {
+    Matrix<T> dest (*this);
+
     int rws = 0, cls;
     for (auto x : initList)
     {
         cls = 0;
         for (auto y : x)
-            data[rws][cls++] = y;
+            dest[rws][cls++] = y;
         ++rws;
     }
+
+    swap(dest);
 }
 
 template <typename T>
@@ -240,7 +260,7 @@ Matrix<T> &Matrix<T>::invert() &
             {
                 for (int j = 0; j < cols; j++)
                 {
-                    if (j == k || i == g) continue;
+                    if (j == k || i == g)        continue;
                     else if ((j < k) && (g > i)) subMatrix[g - 1][j] = data[g][j];
                     else if ((j > k) && (g > i)) subMatrix[g - 1][j - 1] = data[g][j];
                     else if ((j > k) && (g < i)) subMatrix[g][j - 1] = data[g][j];
@@ -251,23 +271,29 @@ Matrix<T> &Matrix<T>::invert() &
         }
     }
 
+    tmp.transpose();
+    tmp  /= vl;
     swap(tmp);
 
-    this->transpose();
-
-    return (*this /= vl);
+    return *this;
 }
 
 template <typename T>
-T Matrix<T>::det() const { assert(cols == rows); return det(*this); }
+T Matrix<T>::det() const
+{
+    assert(cols == rows);
+    return det(*this);
+}
 
 template <typename T>
 T Matrix<T>::det(Matrix<T> matrix) const
 {
     int sz_ = matrix.ncols();
 
-    if      (sz_ == 1)  return matrix[0][0];
-    else if (sz_ == 2)  return matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
+    if (sz_ == 1)
+        return matrix[0][0];
+    else if (sz_ == 2)
+        return matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
     else
     {
         T resultD = 0;
@@ -279,7 +305,7 @@ T Matrix<T>::det(Matrix<T> matrix) const
             {
                 for (int j = 0; j < sz_; j++)
                 {
-                    if (j == k) continue;
+                    if (j == k)     continue;
                     else if (j < k) subMatrix[i - 1][j] = matrix[i][j];
                     else            subMatrix[i - 1][j - 1] = matrix[i][j];
                 }
@@ -289,7 +315,6 @@ T Matrix<T>::det(Matrix<T> matrix) const
         return resultD;
     }
 }
-
 
 template <typename T>
 Matrix<T> Matrix<T>::operator+(const Matrix<T> &rhs) const
